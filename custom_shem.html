@@ -1,26 +1,68 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ouvrir AgriceApp</title>
     <script>
         function openApp() {
-            // Récupérer le paramètre nom de l'URL
+            // Récupérer TOUS les paramètres de l'URL actuelle
             const urlParams = new URLSearchParams(window.location.search);
-            const nom = urlParams.get('nom');
             
-            // Ouvrir l'app avec le custom scheme
-            window.location = 'dimsapp://open?nom=' + encodeURIComponent(nom);
+            // Construire la nouvelle URL pour l'app avec tous les paramètres
+            let appUrl = 'dimsapp://open';
+            
+            // Ajouter tous les paramètres s'il y en a
+            if (urlParams.toString()) {
+                appUrl += '?' + urlParams.toString();
+            }
+            
+            console.log('Ouverture de l app avec URL:', appUrl);
+            
+            // Ouvrir l'app
+            window.location.href = appUrl;
             
             // Rediriger vers Play Store après 1.5s si échec
             setTimeout(function() {
-                window.location = 'https://play.google.com/store/apps/details?id=ci.directsoft.agriceapp';
+                window.location.href = 'https://play.google.com/store/apps/details?id=ci.directsoft.agriceapp';
             }, 1500);
         }
         
+        // Ouvrir automatiquement au chargement
         window.onload = openApp;
     </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #f0f8ff;
+        }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <p>Ouverture de l'application AgriceApp...</p>
-    <a href="#" onclick="openApp()">Cliquez ici si la redirection ne fonctionne pas</a>
+    <h1>🔗 Ouverture de AgriceApp...</h1>
+    <p>Redirection automatique en cours</p>
+    
+    <p>Si l'application ne s'ouvre pas automatiquement :</p>
+    <a href="#" onclick="openApp(); return false;" class="button">Cliquez ici pour ouvrir l'app</a>
+    
+    <br><br>
+    <small>Si l'application n'est pas installée, vous serez redirigé vers le Play Store</small>
+    
+    <script>
+        // Debug: afficher les paramètres reçus
+        const urlParams = new URLSearchParams(window.location.search);
+        console.log('Paramètres reçus:', Array.from(urlParams.entries()));
+    </script>
 </body>
 </html>
