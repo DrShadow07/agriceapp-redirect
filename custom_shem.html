@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script>
+        function openApp() {
+            // Récupérer le paramètre nom de l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const nom = urlParams.get('nom');
+            
+            // Ouvrir l'app avec le custom scheme
+            window.location = 'dimsapp://open?nom=' + encodeURIComponent(nom);
+            
+            // Rediriger vers Play Store après 1.5s si échec
+            setTimeout(function() {
+                window.location = 'https://play.google.com/store/apps/details?id=ci.directsoft.agriceapp';
+            }, 1500);
+        }
+        
+        window.onload = openApp;
+    </script>
+</head>
+<body>
+    <p>Ouverture de l'application AgriceApp...</p>
+    <a href="#" onclick="openApp()">Cliquez ici si la redirection ne fonctionne pas</a>
+</body>
+</html>
