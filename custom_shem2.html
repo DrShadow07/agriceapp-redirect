@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ouverture AgriceApp</title>
+
+  <!-- CryptoJS (AES) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+  <style>
+    body { font-family: Arial, sans-serif; text-align:center; padding:40px; background:#f7fbff; }
+    .btn { background:#2b8a3e; color:#fff; padding:12px 20px; border-radius:6px; text-decoration:none; display:inline-block; margin-top:18px;}
+    small { color:#666; display:block; margin-top:14px; }
+  </style>
+</head>
+<body>
+  <h1>🔐 Ouverture AgriceApp…</h1>
+  <p id="status">Traitement en cours, merci de patienter...</p>
+
+  <a id="manualBtn" href="#" class="btn" style="display:none">Ouvrir l'application</a>
+  <small id="debug"></small>
+
+<script>
+(function() {
+  const statusEl = document.getElementById('status');
+  const debugEl = document.getElementById('debug');
+  const manualBtn = document.getElementById('manualBtn');
+
+  // --- CONFIG : la clé doit correspondre à celle utilisée côté envoi ---
+  // Doit être exactement la même (16 chars pour AES-128, ou 32 pour AES-256 si tu changes côté Android)
+  const AES_KEY = "1234567890123456";
+
+  // Récupère param 'data' de l'URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const encryptedData = urlParams.get('data');
+
+  if (!encryptedData) {
+    statusEl.textContent = "Aucune donnée fournie (paramètre 'data' manquant).";
+    debugEl.textContent = "Exemple d'URL attendu: ?data=BASE64_ENCRYPTED_STRING";
+    return;
+  }
+
+  // Déchiffre (CryptoJS AES). On utilise ECB + Pkcs7 pour être compatible avec Cipher.getInstance("AES") en Java
+  function decryptAES_Base64(base64String, keyString) {
+    try {
+      const key = CryptoJS.enc.Utf8.parse(keyString);
+      // Mode ECB et padding Pkcs7 explicités pour compatibilité
+      const bytes = CryptoJS.AES.decrypt(base64String, key, {
+        mode: CryptoJS.mode.ECB,
+        padding: CryptoJS.pad.Pkcs7
+      });
+      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+      return decrypted;
+    } catch (err) {
+      console.error("Erreur déchiffrement:", err);
+      return null;
+    }
+  }
+
+  try {
+    // Some times URL encoding changed + characters like + become spaces, so decode first
+    const encoded = decodeURIComponent(encryptedData);
+    const decryptedJson = decryptAES_Base64(encoded, AES_KEY);
+
+    if (!decryptedJson) {
+      statusEl.textContent = "Impossible de déchiffrer les données.";
+      debugEl.textContent = "Vérifie la clé de chiffrement et le format (Base64 AES).";
+      return;
+    }
+
+    // Parse JSON
+    let params;
+    try {
+      params = JSON.parse(decryptedJson);
+    } catch (e) {
+      statusEl.textContent = "Données déchiffrées invalides (JSON attendu).";
+      debugEl.textContent = "Données décryptées: " + decryptedJson;
+      return;
+    }
+
+    // Construire dimsapp://open?tel=...&uri=...&email=...&mdp=...
+    function safe(v) {
+      return encodeURIComponent(v == null ? "" : v.toString());
+    }
+
+    const tel = safe(params.tel);
+    const uri = safe(params.uri);
+    const email = safe(params.email);
+    const mdp = safe(params.mdp);
+
+    const appUri = `dimsapp://open?tel=${tel}&uri=${uri}&email=${email}&mdp=${mdp}`;
+
+    // Affichage debug
+    debugEl.textContent = "Redirection vers: " + appUri;
+
+    // Mettre le bouton manuel pour permettre l'ouverture si automatique échoue
+    manualBtn.href = appUri;
+    manualBtn.style.display = 'inline-block';
+
+    // Essayer d'ouvrir l'app automatiquement
+    statusEl.textContent = "Ouverture de l'application...";
+    // Première tentative : changer window.location (fonctionne sur la plupart des mobiles)
+    window.location.href = appUri;
+
+    // Fallback : après un délai, rediriger vers le Play Store si l'app n'est pas installée
+    setTimeout(function() {
+      statusEl.textContent = "Si l'application n'a pas démarré, vous serez redirigé vers le Play Store...";
+      // Remplace par ta page Play Store
+      window.location.href = "https://play.google.com/store/apps/details?id=ci.directsoft.agriceapp";
+    }, 1500);
+
+  } catch (e) {
+    console.error(e);
+    statusEl.textContent = "Erreur inattendue lors du traitement.";
+    debugEl.textContent = e.toString();
+  }
+})();
+</script>
+</body>
+</html>
