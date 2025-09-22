@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Décryptage Lien AgriceApp</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+  <h2>🔓 Déchiffrement des paramètres</h2>
+  <div id="output" style="white-space: pre-wrap; background:#f0f0f0; padding:10px;"></div>
+
+  <script>
+    const SECRET_KEY = "MaCleSuperSecrete123"; // 🔑 même clé que dans ton générateur !
+
+    function decryptParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const encrypted = urlParams.get("data");
+
+      if (!encrypted) {
+        document.getElementById("output").textContent = "❌ Aucun paramètre 'data' trouvé dans l'URL.";
+        return;
+      }
+
+      try {
+        // Déchiffrer avec la même clé
+        const bytes = CryptoJS.AES.decrypt(encrypted, SECRET_KEY);
+        const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
+
+        if (!decryptedText) {
+          document.getElementById("output").textContent = "⚠️ Erreur : impossible de déchiffrer (clé incorrecte ?).";
+          return;
+        }
+
+        // Convertir en JSON
+        const data = JSON.parse(decryptedText);
+
+        document.getElementById("output").textContent =
+          "✅ Paramètres déchiffrés :\n" + JSON.stringify(data, null, 2);
+
+        // Ensuite, rediriger vers l'app si tu veux :
+        // let appUrl = "dimsapp://open?tel=" + encodeURIComponent(data.tel) +
+        //              "&uri=" + encodeURIComponent(data.uri) +
+        //              "&email=" + encodeURIComponent(data.email) +
+        //              "&mdp=" + encodeURIComponent(data.mdp);
+        // window.location.href = appUrl;
+
+      } catch (e) {
+        document.getElementById("output").textContent = "❌ Exception : " + e.message;
+      }
+    }
+
+    decryptParams();
+  </script>
+</body>
+</html>
